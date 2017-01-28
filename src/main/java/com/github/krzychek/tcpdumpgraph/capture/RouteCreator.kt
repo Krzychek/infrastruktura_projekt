@@ -1,6 +1,9 @@
 package com.github.krzychek.tcpdumpgraph.capture
 
-import com.github.krzychek.tcpdumpgraph.capture.model.*
+import com.github.krzychek.tcpdumpgraph.capture.model.RouteCapture
+import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode
+import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
+import com.github.krzychek.tcpdumpgraph.model.Address
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture

@@ -1,6 +1,6 @@
 package com.github.krzychek.tcpdumpgraph.capture
 
-import com.github.krzychek.tcpdumpgraph.capture.model.Address
+import com.github.krzychek.tcpdumpgraph.model.Address
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
 
 
