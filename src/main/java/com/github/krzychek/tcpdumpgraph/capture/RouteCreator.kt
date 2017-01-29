@@ -33,10 +33,13 @@ class RouteCreator
                 ?.groupValues?.get(1)
     }
 
+    private val ROUTE_PREFIX_NODES = listOf(RouteNode.KnownRouteNode("localhost"))
+
     fun createRouteCapture(capture: TCPDumpCapture) = RouteCapture(
             lenght = capture.lenght,
             incomming = capture.incomming,
-            nodes = ProcessBuilder(listOf("traceroute", "-n", capture.address.name, "-q", "1")).start().apply { waitFor() }
+            nodes = ROUTE_PREFIX_NODES
+                    + ProcessBuilder(listOf("traceroute", "-n", capture.address.name, "-q", "1")).start().apply { waitFor() }
                     .inputStream.bufferedReader().readLines()
                     .map(getIpAddressOfNode)
                     .filterNotNull()
