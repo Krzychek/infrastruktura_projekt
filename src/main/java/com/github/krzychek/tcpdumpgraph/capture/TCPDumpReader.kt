@@ -1,7 +1,7 @@
 package com.github.krzychek.tcpdumpgraph.capture
 
-import com.github.krzychek.tcpdumpgraph.model.Address
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
+import com.github.krzychek.tcpdumpgraph.model.Address
 
 
 class TCPDumpReader(private val isIncomming: (String) -> Boolean)
@@ -19,5 +19,8 @@ class TCPDumpReader(private val isIncomming: (String) -> Boolean)
                         incomming = incomming
                 )
             }
+
+    fun readFrom(sequence: Sequence<String>) =
+            sequence.map(this).filterNotNull()
 }
 

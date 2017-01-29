@@ -3,6 +3,7 @@ package com.github.krzychek.tcpdumpgraph.capture
 import com.github.krzychek.tcpdumpgraph.capture.model.RouteCapture
 import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
+import com.github.krzychek.tcpdumpgraph.killOnShutdown
 import com.github.krzychek.tcpdumpgraph.model.Address
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -38,21 +39,23 @@ class RouteCreator
     fun createRouteCapture(capture: TCPDumpCapture) = RouteCapture(
             lenght = capture.lenght,
             incomming = capture.incomming,
-            nodes = ROUTE_PREFIX_NODES
-                    + ProcessBuilder(listOf("traceroute", "-n", capture.address.name, "-q", "1")).start().apply { waitFor() }
-                    .inputStream.bufferedReader().readLines()
-                    .map(getIpAddressOfNode)
-                    .filterNotNull()
-                    .map {
-                        if ('*' in it) RouteNode.UnknownRouteNode()
-                        else RouteNode.KnownRouteNode(it)
-                    }
-                    .fold(emptyList<RouteNode>()) { list, routeNode ->
-                        val last = list.lastOrNull()
-                        if (routeNode is RouteNode.UnknownRouteNode && last is RouteNode.UnknownRouteNode)
-                            list.apply { last.count++ }
-                        else list + routeNode
-                    }
+            nodes = ROUTE_PREFIX_NODES +
+                    ProcessBuilder(listOf("traceroute", "-n", capture.address.name, "-q", "1")).start()
+                            .killOnShutdown()
+                            .apply { waitFor() }
+                            .inputStream.bufferedReader().readLines()
+                            .map(getIpAddressOfNode)
+                            .filterNotNull()
+                            .map {
+                                if ('*' in it) RouteNode.UnknownRouteNode()
+                                else RouteNode.KnownRouteNode(it)
+                            }
+                            .fold(emptyList<RouteNode>()) { list, routeNode ->
+                                val last = list.lastOrNull()
+                                if (routeNode is RouteNode.UnknownRouteNode && last is RouteNode.UnknownRouteNode)
+                                    list.apply { last.count++ }
+                                else list + routeNode
+                            }
     )
 
 
