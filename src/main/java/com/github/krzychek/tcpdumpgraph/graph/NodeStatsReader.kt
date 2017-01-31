@@ -12,12 +12,11 @@ fun startUpdatingGraphStats(graphModel: GraphModel) = thread(name = "NodeStatsRe
     val futures = arrayListOf<CompletableFuture<*>>()
     while (true) {
 
-
         graphModel.nodes
                 .filter { it.id.isIP }
                 .forEach { ipNode ->
                     futures.add(CompletableFuture.supplyAsync(Supplier {
-                        ProcessBuilder(listOf("ping", ipNode.id.stringId, "-c", "1")).start()
+                        ProcessBuilder(listOf("ping", ipNode.id.uniqueId, "-c", "1")).start()
                                 .killOnShutdown()
                                 .apply { waitFor() }
                                 .inputStream.bufferedReader()

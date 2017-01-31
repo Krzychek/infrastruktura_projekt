@@ -4,21 +4,21 @@ package com.github.krzychek.tcpdumpgraph.graph.model
 class NodeId {
 
     val isIP: Boolean
-    val stringId: String
+    val uniqueId: String
     val display: String
 
     constructor(stringId: String) {
-        this.stringId = stringId
+        this.uniqueId = stringId
         display = stringId
         isIP = true
     }
 
 
     constructor(previousNode: NodeId, times: Int, nextNode: NodeId?) {
-        val (first, second) = arrayOf(previousNode.stringId, nextNode?.stringId ?: "THE END").apply { sort() }
+        val (first, second) = arrayOf(previousNode.uniqueId, nextNode?.uniqueId ?: "THE END").apply { sort() }
 
-        this.stringId = "$first -> [$times] -> $second"
-        display = "$times uknown"
+        this.uniqueId = "$first -> [$times] -> $second"
+        display = "$times unknown"
         isIP = false
     }
 
@@ -31,12 +31,12 @@ class NodeId {
 
         other as NodeId
 
-        if (stringId != other.stringId) return false
+        if (uniqueId != other.uniqueId) return false
 
         return true
     }
 
-    override fun hashCode(): Int = stringId.hashCode()
+    override fun hashCode(): Int = uniqueId.hashCode()
 
 
 }
