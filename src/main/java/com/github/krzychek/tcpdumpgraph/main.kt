@@ -87,7 +87,7 @@ fun startTCPDump(graphModelUpdater: GraphModelUpdater, routeCreator: RouteCreato
 }
 
 
-fun startControllForm(jGraph: JGraph) = thread {
+fun startControllForm(jGraph: JGraph) {
     val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
 
     JFrame("graph controll").apply {

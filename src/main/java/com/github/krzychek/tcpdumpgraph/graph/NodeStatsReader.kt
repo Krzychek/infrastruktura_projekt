@@ -9,7 +9,7 @@ import kotlin.concurrent.thread
 
 private val executor = Executors.newFixedThreadPool(4)
 fun startUpdatingGraphStats(graphModel: GraphModel) = thread(name = "NodeStatsReader") {
-    var futures = arrayListOf<CompletableFuture<*>>()
+    val futures = arrayListOf<CompletableFuture<*>>()
     while (true) {
 
 
@@ -34,5 +34,7 @@ fun startUpdatingGraphStats(graphModel: GraphModel) = thread(name = "NodeStatsRe
 
         CompletableFuture.allOf(*futures.toTypedArray())
                 .join()
+
+        futures.clear()
     }
 }
