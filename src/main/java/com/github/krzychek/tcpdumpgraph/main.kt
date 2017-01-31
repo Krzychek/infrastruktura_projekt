@@ -14,6 +14,7 @@ import com.github.krzychek.tcpdumpgraph.utils.scheduleWithFixedDelayX
 import com.jgraph.layout.JGraphFacade
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout
 import org.jgraph.JGraph
+import org.jgraph.graph.DefaultGraphCell
 import org.jgrapht.EdgeFactory
 import org.jgrapht.ext.JGraphModelAdapter
 import org.jgrapht.graph.DefaultDirectedWeightedGraph
@@ -34,7 +35,7 @@ import kotlin.concurrent.thread
 
 val localHostIPs by lazy {
     ProcessBuilder("ip", "add", "show").start().killOnShutdown()
-            .inputStream.bufferedReader().readLines()
+            .inputStream.reader().readLines()
             .map { ".*inet (.+)/.*".toRegex().matchEntire(it)?.groupValues?.get(1) }
             .filterNotNull()
 }
@@ -54,8 +55,8 @@ fun main(args: Array<String>) {
     val routeCreator = RouteCreator()
     val graphModelUpdater = GraphModelUpdater(graphModel = graphModel)
 
-    startTCPDump(graphModelUpdater, routeCreator, tcpDumpReader)
     startGraphUI(graphModel)
+    startTCPDump(graphModelUpdater, routeCreator, tcpDumpReader)
     startUpdatingGraphStats(graphModel)
 }
 
@@ -68,7 +69,7 @@ fun startTCPDump(graphModelUpdater: GraphModelUpdater, routeCreator: RouteCreato
     ProcessBuilder("gksudo", "tcpdump tcp -t -n").start()
             .killOnShutdown()
             .apply {
-                inputStream.bufferedReader().useLines {
+                inputStream.reader().useLines {
                     tcpDumpReader.readFrom(it)
                             .filter { tcpDumpActiveToggle.get() }
                             .map(routeCreator)
@@ -102,7 +103,17 @@ fun startControllForm(jGraph: JGraph) {
 
             add(JButton("relayout").apply {
                 val layout = JGraphHierarchicalLayout()
-                val facade = JGraphFacade(jGraph)
+                val facade = JGraphFacade(jGraph).apply {
+                    roots = getUnconnectedVertices(false).filter {
+                        if (it is DefaultGraphCell) {
+                            val userObject = it.userObject
+                            if (userObject is Node && userObject.id.uniqueId == "localhost")
+                                return@filter true
+                        }
+                        return@filter false
+                    }
+
+                }
                 addActionListener {
                     layout.run(facade)
                     facade.createNestedMap(true, true).let { map ->
@@ -160,13 +171,13 @@ fun startControllForm(jGraph: JGraph) {
     }
 }
 
-fun Double.format(format: String = "%.2f") {
-    String.format(format, this)
-}
+fun Double.format(format: String = "%.2f") =
+        String.format(format, this)
 
-fun Long.format(format: String = "%d") {
-    String.format(format, this)
-}
+
+fun Long.format(format: String = "%d") =
+        String.format(format, this)
+
 
 fun startGraphUI(graphModel: GraphModel) = thread {
     val listenableDirectedWeightedGraph = ListenableDirectedWeightedGraph<Node, VisualEdge>(
@@ -185,12 +196,12 @@ fun startGraphUI(graphModel: GraphModel) = thread {
         defaultCloseOperation = EXIT_ON_CLOSE
         isVisible = true
     }
+    startControllForm(jGraph)
 
 
     VisualGraphToModelBinder(graphModel = graphModel, graph = listenableDirectedWeightedGraph)
             .start()
 
-    startControllForm(jGraph)
 }
 
 
