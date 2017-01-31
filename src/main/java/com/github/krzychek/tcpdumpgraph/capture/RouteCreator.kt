@@ -56,6 +56,9 @@ class RouteCreator
                                     it + RouteNode.KnownRouteNode(capture.address.name)
                                 else it
                             }
+                            .let {
+                                if (capture.incomming) it.reversed() else it
+                            }
     )
 
 
