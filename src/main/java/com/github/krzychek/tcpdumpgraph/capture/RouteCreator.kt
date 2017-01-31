@@ -5,14 +5,14 @@ import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
 import com.github.krzychek.tcpdumpgraph.killOnShutdown
 import com.github.krzychek.tcpdumpgraph.model.Address
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import java.util.concurrent.ConcurrentHashMap
 
 class RouteCreator
     : (TCPDumpCapture) -> CompletableFuture<RouteCapture> {
 
-    private val routes: HashMap<Address, RouteCapture> = hashMapOf()
+    private val routes: MutableMap<Address, RouteCapture> = ConcurrentHashMap()
 
     override fun invoke(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
             routes[capture.address]?.let { completedFuture(it) } ?: computeRoute(capture)
@@ -50,6 +50,11 @@ class RouteCreator
                                 if (routeNode is RouteNode.UnknownRouteNode && last is RouteNode.UnknownRouteNode)
                                     list.apply { last.count++ }
                                 else list + routeNode
+                            }
+                            .let {
+                                if (it.lastOrNull()?.address != capture.address.name)
+                                    it + RouteNode.KnownRouteNode(capture.address.name)
+                                else it
                             }
     )
 
