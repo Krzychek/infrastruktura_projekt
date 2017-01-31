@@ -165,7 +165,7 @@ fun startControllForm(jGraph: JGraph) {
             })
         }
 
-        setSize(200, 400)
+        setSize(250, 400)
         isResizable = false
         isVisible = true
     }
