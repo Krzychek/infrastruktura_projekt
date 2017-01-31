@@ -3,12 +3,15 @@ package com.github.krzychek.tcpdumpgraph.graph.model
 import java.util.concurrent.ConcurrentHashMap
 
 
-class Graph {
+class GraphModel {
 
     val nodeMap: MutableMap<NodeId, Node> = ConcurrentHashMap(hashMapOf(NodeId("localhost") to Node(NodeId("localhost"))))
     val edgeMap: MutableMap<EdgeId, Edge> = ConcurrentHashMap()
+
     val edges: Collection<Edge>
         get() = edgeMap.values
+    val nodes: Collection<Node>
+        get() = nodeMap.values
 
     fun createNode(nodeId: NodeId) =
             nodeMap.computeIfAbsent(nodeId) { Node(nodeId) }

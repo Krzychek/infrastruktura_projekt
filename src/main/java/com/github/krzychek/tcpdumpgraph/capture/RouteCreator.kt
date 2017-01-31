@@ -8,10 +8,6 @@ import com.github.krzychek.tcpdumpgraph.model.Address
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
-import java.util.concurrent.CompletableFuture.supplyAsync
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.function.Supplier
 
 class RouteCreator
     : (TCPDumpCapture) -> CompletableFuture<RouteCapture> {
@@ -22,11 +18,10 @@ class RouteCreator
             routes[capture.address]?.let { completedFuture(it) } ?: computeRoute(capture)
 
 
-    private val routeComputingExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private fun computeRoute(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
-            supplyAsync(Supplier {
+            CompletableFuture.supplyAsync {
                 routes.computeIfAbsent(capture.address) { createRouteCapture(capture) }
-            }, routeComputingExecutor)
+            }
 
     private val getIpAddressOfNode: (String) -> String? = {
         " *\\d+ +(\\S+) ?.*".toRegex()

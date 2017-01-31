@@ -1,8 +1,15 @@
 package com.github.krzychek.tcpdumpgraph.graph.model
 
+import java.util.*
+
 class Node(
         val id: NodeId
 ) {
+
+    var rtt = DoubleSummaryStatistics()
+    val inPacketCounter = PacketCounter()
+    val outPacketCounter = PacketCounter()
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false

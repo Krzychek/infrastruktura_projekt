@@ -3,25 +3,23 @@ package com.github.krzychek.tcpdumpgraph.graph.model
 
 class NodeId {
 
+    val isIP: Boolean
     val stringId: String
     val display: String
 
     constructor(stringId: String) {
         this.stringId = stringId
         display = stringId
+        isIP = true
     }
 
 
     constructor(previousNode: NodeId, times: Int, nextNode: NodeId?) {
-        var first = previousNode.stringId
-        var second = nextNode?.stringId ?: "THE END"
-        if (first > second) { // TODO hacky hacky
-            val tmp = second
-            second = first
-            first = tmp
-        }
+        val (first, second) = arrayOf(previousNode.stringId, nextNode?.stringId ?: "THE END").apply { sort() }
+
         this.stringId = "$first -> [$times] -> $second"
-        display = "$times *"
+        display = "$times uknown"
+        isIP = false
     }
 
 
