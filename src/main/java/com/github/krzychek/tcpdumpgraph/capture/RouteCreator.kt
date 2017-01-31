@@ -5,22 +5,45 @@ import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
 import com.github.krzychek.tcpdumpgraph.killOnShutdown
 import com.github.krzychek.tcpdumpgraph.model.Address
+import com.github.krzychek.tcpdumpgraph.utils.scheduleWithFixedDelayX
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class RouteCreator
     : (TCPDumpCapture) -> CompletableFuture<RouteCapture> {
 
-    private val routes: MutableMap<Address, RouteCapture> = ConcurrentHashMap()
+    private val routes: MutableMap<Address, List<RouteNode>> = ConcurrentHashMap()
+
+    init {
+        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelayX(10, 10, TimeUnit.MINUTES) {
+            routes.replaceAll { address, _ ->
+                createRouteCapture(address)
+            }
+        }
+    }
 
     override fun invoke(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
-            routes[capture.address]?.let { completedFuture(it) } ?: computeRoute(capture)
+            routes[capture.address]?.let {
+                completedFuture(RouteCapture(
+                        lenght = capture.lenght,
+                        incomming = capture.incomming,
+                        nodes = it
+                ))
+            } ?: computeRoute(capture)
 
 
     private fun computeRoute(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
             CompletableFuture.supplyAsync {
-                routes.computeIfAbsent(capture.address) { createRouteCapture(capture) }
+                RouteCapture(
+                        lenght = capture.lenght,
+                        incomming = capture.incomming,
+                        nodes = routes.computeIfAbsent(capture.address) {
+                            createRouteCapture(capture.address)
+                        }
+                )
             }
 
     private val getIpAddressOfNode: (String) -> String? = {
@@ -31,13 +54,10 @@ class RouteCreator
 
     private val ROUTE_PREFIX_NODES = listOf(RouteNode.KnownRouteNode("localhost"))
 
-    fun createRouteCapture(capture: TCPDumpCapture) = RouteCapture(
-            lenght = capture.lenght,
-            incomming = capture.incomming,
-            nodes = ROUTE_PREFIX_NODES +
-                    ProcessBuilder(listOf("traceroute", "-n", capture.address.name, "-q", "1")).start()
+    fun createRouteCapture(address: Address) =
+            ROUTE_PREFIX_NODES +
+                    ProcessBuilder(listOf("traceroute", "-n", address.name, "-q", "1")).start()
                             .killOnShutdown()
-                            .apply { waitFor() }
                             .inputStream.bufferedReader().readLines()
                             .map(getIpAddressOfNode)
                             .filterNotNull()
@@ -52,14 +72,10 @@ class RouteCreator
                                 else list + routeNode
                             }
                             .let {
-                                if (it.lastOrNull()?.address != capture.address.name)
-                                    it + RouteNode.KnownRouteNode(capture.address.name)
+                                if (it.lastOrNull()?.address != address.name)
+                                    it + RouteNode.KnownRouteNode(address.name)
                                 else it
                             }
-                            .let {
-                                if (capture.incomming) it.reversed() else it
-                            }
-    )
 
 
 }

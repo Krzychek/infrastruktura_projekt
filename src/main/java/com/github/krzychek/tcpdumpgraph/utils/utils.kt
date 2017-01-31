@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit
 internal val NOT_IMPLEMENTED: Exception
     get() = UnsupportedOperationException("not implemented")
 
-fun ScheduledExecutorService.scheduleWithFixedDelayX(period: Long, timeUnit: TimeUnit, command: () -> Unit) {
-    this.scheduleWithFixedDelay(command, 0, period, timeUnit)
+fun ScheduledExecutorService.scheduleWithFixedDelayX(delay: Long = 0, period: Long, timeUnit: TimeUnit, command: () -> Unit) {
+    this.scheduleWithFixedDelay(command, delay, period, timeUnit)
 }
 
 

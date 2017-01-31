@@ -132,18 +132,18 @@ fun startControllForm(jGraph: JGraph) {
 
 
             add(JTextArea().apply {
-                executor.scheduleWithFixedDelayX(200, TimeUnit.MILLISECONDS) {
+                executor.scheduleWithFixedDelayX(0, 200, TimeUnit.MILLISECONDS, {
                     this.text = """
-                                | === === PACKETS === ===
-                                |   in queue : ${waitingDumpsForRoute.get()}
-                                |   captured : ${packetsCaptured.get()}
-                                |""".trimMargin()
-                }
+                                    | === === PACKETS === ===
+                                    |   in queue : ${waitingDumpsForRoute.get()}
+                                    |   captured : ${packetsCaptured.get()}
+                                    |""".trimMargin()
+                })
             })
 
 
             add(JTextArea().apply {
-                executor.scheduleWithFixedDelayX(200, TimeUnit.MILLISECONDS) {
+                executor.scheduleWithFixedDelayX(0, 200, TimeUnit.MILLISECONDS, {
                     selectedNode?.let {
                         this.text = """
                                     | === === Node === ===
@@ -161,7 +161,7 @@ fun startControllForm(jGraph: JGraph) {
                                     |""".trimMargin()
                                 else ""
                     }
-                }
+                })
             })
         }
 

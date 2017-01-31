@@ -18,9 +18,7 @@ fun startUpdatingGraphStats(graphModel: GraphModel) = thread(name = "NodeStatsRe
                     futures.add(CompletableFuture.supplyAsync(Supplier {
                         ProcessBuilder(listOf("ping", ipNode.id.uniqueId, "-c", "1")).start()
                                 .killOnShutdown()
-                                .apply { waitFor() }
-                                .inputStream.bufferedReader()
-                                .readLines()
+                                .inputStream.bufferedReader().readLines()
                                 .forEach {
                                     ".*time=([\\d.]+).*".toRegex()
                                             .matchEntire(it)

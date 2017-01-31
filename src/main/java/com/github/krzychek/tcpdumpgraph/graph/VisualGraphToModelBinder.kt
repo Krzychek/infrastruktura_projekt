@@ -16,14 +16,14 @@ class VisualGraphToModelBinder(private val graphModel: GraphModel,
     private val uiUpdaterService = Executors.newSingleThreadScheduledExecutor()
 
     fun start() {
-        uiUpdaterService.scheduleWithFixedDelayX(1, TimeUnit.SECONDS) {
+        uiUpdaterService.scheduleWithFixedDelayX(0, 1, TimeUnit.SECONDS, {
             graphModel.edges.forEach { edge ->
                 edge.from.updateOnGraph()
                 edge.to.updateOnGraph()
                 edge.updateOnGraph()
             }
             graphModel.nodes.forEach { it.updateOnGraph() }
-        }
+        })
     }
 
     private fun Node.updateOnGraph() {

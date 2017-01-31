@@ -15,7 +15,8 @@ class GraphModelUpdater(val graphModel: GraphModel) {
 
     fun processRouteCapture(routeCapture: RouteCapture) {
 
-        routeCapture.nodes.mapToListOfGraphNodes().apply {
+        val nodes = if (routeCapture.incomming) routeCapture.nodes else routeCapture.nodes.reversed()
+        mapToSequenceOfGraphNodes(nodes).toList().apply {
             if (routeCapture.incomming) {
                 forEach { it.inPacketCounter.countPacket(routeCapture.lenght) }
             } else {
@@ -31,11 +32,11 @@ class GraphModelUpdater(val graphModel: GraphModel) {
 
     }
 
-    private fun List<RouteNode>.mapToListOfGraphNodes(): List<Node> =
-            tripleMap { previous, current, next ->
+    private fun mapToSequenceOfGraphNodes(nodes: List<RouteNode>): Sequence<Node> =
+            nodes.tripleMap { previous, current, next ->
                 val nodeId: NodeId = current.createNodeId(previous, next)
                 graphModel.createNode(nodeId)
-            }.toList()
+            }
 
     private fun RouteNode.createNodeId(previous: RouteNode? = null, next: RouteNode? = null): NodeId {
         return when (this) {
