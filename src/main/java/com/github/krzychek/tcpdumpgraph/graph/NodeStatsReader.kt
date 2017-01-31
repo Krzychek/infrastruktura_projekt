@@ -2,13 +2,16 @@ package com.github.krzychek.tcpdumpgraph.graph
 
 import com.github.krzychek.tcpdumpgraph.graph.model.GraphModel
 import com.github.krzychek.tcpdumpgraph.killOnShutdown
+import com.github.salomonbrys.kodein.Kodein
+import com.github.salomonbrys.kodein.instance
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.function.Supplier
 import kotlin.concurrent.thread
 
 private val executor = Executors.newFixedThreadPool(4)
-fun startUpdatingGraphStats(graphModel: GraphModel) = thread(name = "NodeStatsReader") {
+fun startUpdatingGraphStats(kodein: Kodein) = thread(name = "NodeStatsReader") {
+    val graphModel: GraphModel = kodein.instance()
     val futures = arrayListOf<CompletableFuture<*>>()
     while (true) {
 

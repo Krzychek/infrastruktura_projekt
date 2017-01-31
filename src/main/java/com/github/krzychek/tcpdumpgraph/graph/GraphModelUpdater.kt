@@ -10,8 +10,12 @@ import com.github.krzychek.tcpdumpgraph.graph.model.NodeId
 import com.github.krzychek.tcpdumpgraph.utils.NOT_IMPLEMENTED
 import com.github.krzychek.tcpdumpgraph.utils.iterateInPairs
 import com.github.krzychek.tcpdumpgraph.utils.tripleMap
+import com.github.salomonbrys.kodein.Kodein
+import com.github.salomonbrys.kodein.instance
 
-class GraphModelUpdater(val graphModel: GraphModel) {
+class GraphModelUpdater(kodein: Kodein) {
+
+    private val graphModel: GraphModel = kodein.instance()
 
     fun processRouteCapture(routeCapture: RouteCapture) {
 

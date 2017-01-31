@@ -61,6 +61,8 @@
     <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-stdlib:1.1.0-beta-22" level="project" />
     <orderEntry type="library" name="Maven: org.jetbrains.kotlin:kotlin-runtime:1.1.0-beta-22" level="project" />
     <orderEntry type="library" name="Maven: org.jetbrains:annotations:13.0" level="project" />
+    <orderEntry type="library" name="Maven: com.github.salomonbrys.kodein:kodein:3.2.0" level="project" />
+    <orderEntry type="library" name="Maven: com.github.salomonbrys.kodein:kodein-core:3.2.0" level="project" />
     <orderEntry type="library" name="Maven: org.javabits.jgrapht:jgrapht-ext:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.javabits.jgrapht:jgrapht-core:0.9.1" level="project" />
     <orderEntry type="library" name="Maven: org.tinyjee.jgraphx:jgraphx:2.0.0.1" level="project" />

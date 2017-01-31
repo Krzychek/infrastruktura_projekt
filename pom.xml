@@ -67,6 +67,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.github.salomonbrys.kodein</groupId>
+            <artifactId>kodein</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.javabits.jgrapht</groupId>
             <artifactId>jgrapht-ext</artifactId>
             <version>0.9.1</version>

@@ -11,6 +11,10 @@ import com.github.krzychek.tcpdumpgraph.graph.model.Node
 import com.github.krzychek.tcpdumpgraph.graph.model.VisualEdge
 import com.github.krzychek.tcpdumpgraph.graph.startUpdatingGraphStats
 import com.github.krzychek.tcpdumpgraph.utils.scheduleWithFixedDelayX
+import com.github.salomonbrys.kodein.Kodein
+import com.github.salomonbrys.kodein.bind
+import com.github.salomonbrys.kodein.instance
+import com.github.salomonbrys.kodein.singleton
 import com.jgraph.layout.JGraphFacade
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout
 import org.jgraph.JGraph
@@ -33,13 +37,6 @@ import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.concurrent.thread
 
 
-val localHostIPs by lazy {
-    ProcessBuilder("ip", "add", "show").start().killOnShutdown()
-            .inputStream.reader().readLines()
-            .map { ".*inet (.+)/.*".toRegex().matchEntire(it)?.groupValues?.get(1) }
-            .filterNotNull()
-}
-
 val processToKill = mutableListOf<Process>()
 fun Process.killOnShutdown() = apply {
     processToKill += this
@@ -50,22 +47,36 @@ fun main(args: Array<String>) {
         processToKill.forEach { it.destroyForcibly() }
     })
 
-    val graphModel = GraphModel()
-    val tcpDumpReader = TCPDumpReader(isIncomming = { it in localHostIPs }) // TODO replace
-    val routeCreator = RouteCreator()
-    val graphModelUpdater = GraphModelUpdater(graphModel = graphModel)
+    val kodein = Kodein {
+        bind<GraphModel>() with singleton { GraphModel() }
+        bind<TCPDumpReader>() with singleton { TCPDumpReader() }
+        bind<RouteCreator>() with singleton { RouteCreator() }
+        bind<GraphModelUpdater>() with singleton { GraphModelUpdater(kodein) }
+        bind<StateHolder>() with singleton { StateHolder() }
+        bind<JGraph>() with singleton { createJGraph(kodein) }
+        bind<ListenableDirectedWeightedGraph<Node, VisualEdge>>() with singleton { createListenableDirectedWeghtedGraph(kodein) }
+    }
 
-    startGraphUI(graphModel)
-    startTCPDump(graphModelUpdater, routeCreator, tcpDumpReader)
-    startUpdatingGraphStats(graphModel)
+    startGraphUI(kodein)
+    startTCPDump(kodein)
+    startUpdatingGraphStats(kodein)
+    startControllForm(kodein)
 }
 
-val waitingDumpsForRoute = AtomicLong(0)
-val packetsCaptured = AtomicLong(0)
-var selectedNode: Node? = null
+class StateHolder {
+    val waitingDumpsForRoute = AtomicLong(0)
+    val packetsCaptured = AtomicLong(0)
+    var selectedNode: Node? = null
+}
 
 val tcpDumpActiveToggle = AtomicBoolean(true)
-fun startTCPDump(graphModelUpdater: GraphModelUpdater, routeCreator: RouteCreator, tcpDumpReader: TCPDumpReader) = thread {
+fun startTCPDump(kodein: Kodein) = thread {
+
+    val graphModelUpdater: GraphModelUpdater = kodein.instance()
+    val routeCreator: RouteCreator = kodein.instance()
+    val tcpDumpReader: TCPDumpReader = kodein.instance()
+    val stateHolder: StateHolder = kodein.instance()
+
     ProcessBuilder("gksudo", "tcpdump tcp -t -n").start()
             .killOnShutdown()
             .apply {
@@ -74,10 +85,10 @@ fun startTCPDump(graphModelUpdater: GraphModelUpdater, routeCreator: RouteCreato
                             .filter { tcpDumpActiveToggle.get() }
                             .map(routeCreator)
                             .forEach { future: CompletableFuture<RouteCapture> ->
-                                waitingDumpsForRoute.incrementAndGet()
+                                stateHolder.waitingDumpsForRoute.incrementAndGet()
                                 future.thenAccept {
-                                    packetsCaptured.incrementAndGet()
-                                    waitingDumpsForRoute.decrementAndGet()
+                                    stateHolder.packetsCaptured.incrementAndGet()
+                                    stateHolder.waitingDumpsForRoute.decrementAndGet()
                                     graphModelUpdater.processRouteCapture(it)
                                 }
                             }
@@ -88,8 +99,14 @@ fun startTCPDump(graphModelUpdater: GraphModelUpdater, routeCreator: RouteCreato
 }
 
 
-fun startControllForm(jGraph: JGraph) {
+fun startControllForm(kodein: Kodein) {
+    val jGraph: JGraph = kodein.instance()
+    val stateHolder: StateHolder = kodein.instance()
     val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+
+
+    fun Double.format(format: String = "%.2f") = String.format(format, this)
+    fun Long.format(format: String = "%d") = String.format(format, this)
 
     JFrame("graph controll").apply {
         font = Font.getFont(Font.MONOSPACED)
@@ -135,8 +152,8 @@ fun startControllForm(jGraph: JGraph) {
                 executor.scheduleWithFixedDelayX(0, 200, TimeUnit.MILLISECONDS, {
                     this.text = """
                                     | === === PACKETS === ===
-                                    |   in queue : ${waitingDumpsForRoute.get()}
-                                    |   captured : ${packetsCaptured.get()}
+                                    |   in queue : ${stateHolder.waitingDumpsForRoute.get()}
+                                    |   captured : ${stateHolder.packetsCaptured.get()}
                                     |""".trimMargin()
                 })
             })
@@ -144,7 +161,7 @@ fun startControllForm(jGraph: JGraph) {
 
             add(JTextArea().apply {
                 executor.scheduleWithFixedDelayX(0, 200, TimeUnit.MILLISECONDS, {
-                    selectedNode?.let {
+                    stateHolder.selectedNode?.let {
                         this.text = """
                                     | === === Node === ===
                                     |     name  : ${it.id.display}
@@ -171,37 +188,41 @@ fun startControllForm(jGraph: JGraph) {
     }
 }
 
-fun Double.format(format: String = "%.2f") =
-        String.format(format, this)
 
-
-fun Long.format(format: String = "%d") =
-        String.format(format, this)
-
-
-fun startGraphUI(graphModel: GraphModel) = thread {
-    val listenableDirectedWeightedGraph = ListenableDirectedWeightedGraph<Node, VisualEdge>(
-            DefaultDirectedWeightedGraph(EdgeFactory { (fromId), (toId) ->
-                VisualEdge(graphModel.edgeMap[EdgeId(fromId, toId)]!!)
-            }))
-    val jGraph = JGraph(JGraphModelAdapter(listenableDirectedWeightedGraph)).apply {
-        selectionModel.addGraphSelectionListener { event ->
-            val cell = (event.cells.last() as? DefaultMutableTreeNode)
-            selectedNode = (cell?.userObject as? Node)
-        }
-    }
+fun startGraphUI(kodein: Kodein) = thread {
+    val graphModel: GraphModel = kodein.instance()
+    val listenableDirectedWeightedGraph: ListenableDirectedWeightedGraph<Node, VisualEdge> = kodein.instance()
+    val jGraph: JGraph = kodein.instance()
     JFrame("Graph").apply {
         contentPane = JScrollPane(jGraph)
         setSize(500, 500)
         defaultCloseOperation = EXIT_ON_CLOSE
         isVisible = true
     }
-    startControllForm(jGraph)
-
 
     VisualGraphToModelBinder(graphModel = graphModel, graph = listenableDirectedWeightedGraph)
             .start()
 
+}
+
+private fun createJGraph(kodein: Kodein): JGraph {
+    val listenableDirectedWeightedGraph: ListenableDirectedWeightedGraph<Node, VisualEdge> = kodein.instance()
+    val stateHolder: StateHolder = kodein.instance()
+    return JGraph(JGraphModelAdapter(listenableDirectedWeightedGraph)).apply {
+        selectionModel.addGraphSelectionListener { event ->
+            val cell = (event.cells.last() as? DefaultMutableTreeNode)
+            stateHolder.selectedNode = (cell?.userObject as? Node)
+        }
+    }
+}
+
+private fun createListenableDirectedWeghtedGraph(kodein: Kodein): ListenableDirectedWeightedGraph<Node, VisualEdge> {
+    val graphModel: GraphModel = kodein.instance()
+    return ListenableDirectedWeightedGraph(
+            DefaultDirectedWeightedGraph(EdgeFactory { (fromId), (toId) ->
+                VisualEdge(graphModel.edgeMap[EdgeId(fromId, toId)]!!)
+            })
+    )
 }
 
 
