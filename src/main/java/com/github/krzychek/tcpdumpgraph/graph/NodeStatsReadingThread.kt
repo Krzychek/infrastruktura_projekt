@@ -38,6 +38,8 @@ class NodeStatsReadingThread(kodein: Kodein) : Thread("NodeStatsReader") {
                     .join()
 
             futures.clear()
+
+            Thread.sleep(1000)
         }
     }
 }
