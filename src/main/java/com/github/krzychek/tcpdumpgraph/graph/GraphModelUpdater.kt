@@ -7,7 +7,6 @@ import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode.UnknownRouteNode
 import com.github.krzychek.tcpdumpgraph.graph.model.GraphModel
 import com.github.krzychek.tcpdumpgraph.graph.model.Node
 import com.github.krzychek.tcpdumpgraph.graph.model.NodeId
-import com.github.krzychek.tcpdumpgraph.utils.NOT_IMPLEMENTED
 import com.github.krzychek.tcpdumpgraph.utils.iterateInPairs
 import com.github.krzychek.tcpdumpgraph.utils.tripleMap
 import com.github.salomonbrys.kodein.Kodein

@@ -6,11 +6,8 @@ import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
 import com.github.krzychek.tcpdumpgraph.killOnShutdown
 import com.github.krzychek.tcpdumpgraph.model.Address
 import com.github.krzychek.tcpdumpgraph.utils.kScheduleWithFixedDelay
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.*
 import java.util.concurrent.CompletableFuture.completedFuture
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 class RouteCreator
@@ -36,7 +33,7 @@ class RouteCreator
             } ?: computeRoute(capture)
 
 
-    val executor = Executors.newSingleThreadExecutor()
+    val executor: ExecutorService = Executors.newFixedThreadPool(4)
     private fun computeRoute(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
             CompletableFuture.supplyAsync(Supplier {
                 RouteCapture(
