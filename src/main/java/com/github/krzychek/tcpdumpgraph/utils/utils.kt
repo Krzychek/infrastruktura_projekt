@@ -1,22 +1,12 @@
 package com.github.krzychek.tcpdumpgraph.utils
 
+import java.awt.Point
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
-internal val NOT_IMPLEMENTED: Exception
-    get() = UnsupportedOperationException("not implemented")
-
-fun ScheduledExecutorService.scheduleWithFixedDelayX(delay: Long = 0, period: Long, timeUnit: TimeUnit, command: () -> Unit) {
+fun ScheduledExecutorService.kScheduleWithFixedDelay(delay: Long = 0, period: Long, timeUnit: TimeUnit, command: () -> Unit) {
     this.scheduleWithFixedDelay(command, delay, period, timeUnit)
 }
 
-
-inline fun <T> Iterable<T>.iterateInPairs(operation: (T, T) -> Unit) {
-    val iterator = iterator()
-    var previous = iterator.next()
-    while (iterator.hasNext()) {
-        val current = iterator.next()
-        operation(previous, current)
-        previous = current
-    }
-}
+operator fun Point.component1() = x
+operator fun Point.component2() = y

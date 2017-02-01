@@ -46,7 +46,7 @@ class GraphModelUpdater(kodein: Kodein) {
         return when (this) {
             is UnknownRouteNode -> NodeId(previous!!.createNodeId(), this.count, next!!.createNodeId())
             is KnownRouteNode -> NodeId(this.address)
-            else -> throw NOT_IMPLEMENTED
+            else -> throw UnsupportedOperationException("not implemented")
         }
     }
 }

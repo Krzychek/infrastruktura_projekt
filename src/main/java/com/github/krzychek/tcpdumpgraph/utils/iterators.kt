@@ -24,3 +24,12 @@ fun <T, K> Iterable<T>.tripleMap(operation: (T?, T, T?) -> K) =
             operation(it.first, it.second, it.third)
         }
 
+inline fun <T> Iterable<T>.iterateInPairs(operation: (T, T) -> Unit) {
+    val iterator = iterator()
+    var previous = iterator.next()
+    while (iterator.hasNext()) {
+        val current = iterator.next()
+        operation(previous, current)
+        previous = current
+    }
+}

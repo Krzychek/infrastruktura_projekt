@@ -21,5 +21,7 @@ class GraphModel {
                 Edge(fromNode, toNode)
             }
 
+    fun getEdge(from: NodeId, to: NodeId) = edgeMap[EdgeId(from, to)]
+
 }
 

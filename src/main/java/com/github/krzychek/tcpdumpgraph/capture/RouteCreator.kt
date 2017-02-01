@@ -5,7 +5,7 @@ import com.github.krzychek.tcpdumpgraph.capture.model.RouteNode
 import com.github.krzychek.tcpdumpgraph.capture.model.TCPDumpCapture
 import com.github.krzychek.tcpdumpgraph.killOnShutdown
 import com.github.krzychek.tcpdumpgraph.model.Address
-import com.github.krzychek.tcpdumpgraph.utils.scheduleWithFixedDelayX
+import com.github.krzychek.tcpdumpgraph.utils.kScheduleWithFixedDelay
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -18,7 +18,7 @@ class RouteCreator
     private val routes: MutableMap<Address, List<RouteNode>> = ConcurrentHashMap()
 
     init {
-        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelayX(10, 10, TimeUnit.MINUTES) {
+        Executors.newSingleThreadScheduledExecutor().kScheduleWithFixedDelay(10, 10, TimeUnit.MINUTES) {
             routes.replaceAll { address, _ ->
                 createRouteCapture(address)
             }
