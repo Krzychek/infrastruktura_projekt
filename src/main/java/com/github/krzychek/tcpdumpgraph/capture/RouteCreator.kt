@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture.completedFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 class RouteCreator
     : (TCPDumpCapture) -> CompletableFuture<RouteCapture> {
@@ -35,8 +36,9 @@ class RouteCreator
             } ?: computeRoute(capture)
 
 
+    val executor = Executors.newSingleThreadExecutor()
     private fun computeRoute(capture: TCPDumpCapture): CompletableFuture<RouteCapture> =
-            CompletableFuture.supplyAsync {
+            CompletableFuture.supplyAsync(Supplier {
                 RouteCapture(
                         lenght = capture.lenght,
                         incomming = capture.incomming,
@@ -44,7 +46,7 @@ class RouteCreator
                             createRouteCapture(capture.address)
                         }
                 )
-            }
+            }, executor)
 
     private val getIpAddressOfNode: (String) -> String? = {
         " *\\d+ +(\\S+) ?.*".toRegex()
